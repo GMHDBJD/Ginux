@@ -207,15 +207,7 @@ exception:
 ALIGN   16
 hwint00:
     hwint_master    0
-	call	save
-	mov	al, EOI
-	out	INT_M_CTL, al
-	sti
-	push	0
-	call	clockHandler
-	add	esp, 4
-	cli
-	ret
+
 save:
     pushad
     push    ds
