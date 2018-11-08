@@ -1,9 +1,0 @@
-{
-    "files.associations": {
-        "*.asm": "asm",
-        "protect.h": "c",
-        "global.h": "c",
-        "type.h": "c",
-        "proc.h": "c"
-    }
-}
