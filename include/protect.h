@@ -114,6 +114,7 @@ typedef struct
 #define DA_DRW 0x92
 #define DA_LDT 0x82
 
+#define CLOCK_IRQ 0
 
 void init_8259A();
 

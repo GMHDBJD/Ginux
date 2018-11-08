@@ -3,10 +3,12 @@
 #include "type.h"
 #include "protect.h"
 
-#define NR_TASKS 1
+#define NR_TASKS 2
 #define LDT_SIZE 2
 #define STACK_SIZE_TESTA 0x8000
-#define STACK_SIZE_TOTAL STACK_SIZE_TESTA
+#define STACK_SIZE_TESTB 0x8000
+#define STACK_SIZE_TOTAL (STACK_SIZE_TESTA + STACK_SIZE_TESTB)
+#define NR_IRQ 16
 
 typedef struct
 {
@@ -38,5 +40,12 @@ typedef struct
     u32 pid;
     char p_name[16];
 } PROCESS;
+
+typedef struct
+{
+    task initial_eip;
+    int stacksize;
+    char name[32];
+} TASK;
 
 #endif

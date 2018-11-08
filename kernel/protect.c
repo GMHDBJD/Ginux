@@ -2,7 +2,6 @@
 #include "global.h"
 #include "protect.h"
 
-
 void print(char *);
 void *memSet(void *ptr, int value, int num);
 void print_int(int);
@@ -66,7 +65,7 @@ void exception_handler(int vec_no, int err_code, int eip, int cs, int eflags)
 
 void init_idt_desc(u8 vector, u8 desc_type, int_handler handler, u8 privilege)
 {
-    idt[vector].offset_low = (u32)handler&0xFFFF;
+    idt[vector].offset_low = (u32)handler & 0xFFFF;
     idt[vector].selector = SELECTOR_KERNEL_CS;
     idt[vector].dcount = 0;
     idt[vector].attr = desc_type | (privilege << 5);
@@ -128,5 +127,12 @@ void init_prot()
     tss.ss0 = SELECTOR_KERNEL_DS;
     init_descriptor(&gdt[INDEX_TSS], vir2phys(seg2phys(SELECTOR_KERNEL_DS), &tss), sizeof(tss) - 1, DA_386TSS);
     tss.iobase = sizeof(tss);
-    init_descriptor(&gdt[INDEX_LDT_FIRST], vir2phys(seg2phys(SELECTOR_KERNEL_DS), proc_table[0].ldts), LDT_SIZE * sizeof(DESCRIPTOR) - 1, DA_LDT);
+    PROCESS *p_proc = proc_table;
+    u16 selector_ldt = INDEX_LDT_FIRST << 3;
+    for (int i = 0; i < NR_TASKS; ++i)
+    {
+        init_descriptor(&gdt[selector_ldt >> 3], vir2phys(seg2phys(SELECTOR_KERNEL_DS), proc_table[i].ldts), LDT_SIZE * sizeof(DESCRIPTOR) - 1, DA_LDT);
+        ++p_proc;
+        selector_ldt += 1 << 3;
+    }
 }

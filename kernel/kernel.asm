@@ -23,6 +23,10 @@ P_LDT		equ	P_LDT_SEL	+ 4
 
 TSS3_S_SP0	equ	4
 
+INT_M_CTL equ 0x20
+INT_M_CTLMASK equ 0x21
+EOI equ 0x20
+
 SELECTOR_FLAT_C		equ		0x08
 SELECTOR_TSS		equ		0x20
 SELECTOR_KERNEL_CS	equ		SELECTOR_FLAT_C
@@ -37,12 +41,20 @@ extern	spurious_irq
 extern kernel_main
 extern	p_proc_ready
 extern	tss
+extern delay
+extern interupt_num
+extern clockHandler
+extern irq_table
+
 
 bits 32
 
 [SECTION .bss]
 StackSapce  resb 2*1024
 StackTop:
+
+[SECTION .data]
+DebugMessage db "Debug", 0xA,0
 
 [SECTION .text]
 global _start
@@ -176,15 +188,55 @@ exception:
     hlt
 
 %macro  hwint_master    1
-        push    %1
-        call    spurious_irq
-        add     esp, 4
-        hlt
+    call save
+    in al, INT_M_CTLMASK
+    or al, (1<<%1)
+    mov al, EOI
+    out INT_M_CTL, al
+    sti
+    push %1
+    call [irq_table + 4*%1]
+    pop ecx
+    cli
+    in al, INT_M_CTLMASK
+    and al, ~(1 << %1)
+    out INT_M_CTLMASK, al
+    ret
 %endmacro
 
 ALIGN   16
 hwint00:
-        iretd
+    hwint_master    0
+	call	save
+	mov	al, EOI
+	out	INT_M_CTL, al
+	sti
+	push	0
+	call	clockHandler
+	add	esp, 4
+	cli
+	ret
+save:
+    pushad
+    push    ds
+    push    es
+    push    fs
+    push    gs
+    mov     dx, ss
+    mov     ds, dx
+    mov     es, dx
+    mov     eax, esp
+    inc     dword [interupt_num]
+    cmp     dword [interupt_num], 0
+    jne     .1
+    mov     esp, StackTop
+    push    restart
+    jmp     [eax + RETADR - P_STACKBASE]
+.1:
+    push    re_enter
+    jmp     [eax + RETADR - P_STACKBASE]
+
+
 
 ALIGN   16
 hwint01:
@@ -259,6 +311,8 @@ restart:
     lldt [esp+ P_LDT_SEL]
     lea  eax, [esp+P_STACKTOP]
     mov dword [tss+TSS3_S_SP0], eax
+re_enter:
+    dec dword [interupt_num]
     pop gs
     pop fs
     pop es

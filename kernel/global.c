@@ -5,6 +5,11 @@
 #include "proc.h"
 #include "global.h"
 
-PROCESS proc_table[NR_TASKS];
+void TestA();
+void TestB();
 
-char task_stack[STACK_SIZE_TOTAL];
+TASK task_table[NR_TASKS] = {
+    {TestA, STACK_SIZE_TESTA, "TestA"},
+    {TestB, STACK_SIZE_TESTB, "TestB"}};
+
+irq_handler irq_table[NR_IRQ];

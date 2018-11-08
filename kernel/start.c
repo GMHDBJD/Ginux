@@ -3,7 +3,6 @@
 #include "proc.h"
 #include "global.h"
 
-
 void *memCpy(void *dst, void *src, int size);
 void print(char *str);
 
